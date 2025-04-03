@@ -1,0 +1,238 @@
+<script setup lang="ts">
+import { db } from "@/firebase/config";
+import { showToast } from "@/utils/Toast";
+import {
+  FmlButton,
+  FmlButtons,
+  FmlIcon,
+  FmlInput,
+  FmlItem,
+  FmlLabel,
+  FmlList,
+  FmlRefresher,
+  FmlRefresherContent,
+  FmlSegment,
+  FmlSegmentButton,
+  FmlSpinner,
+  getPlatforms,
+  isPlatform,
+} from "@familyjs/kdu";
+import { collection, doc, getDoc, getDocs, query, where } from "@firebase/firestore";
+import { personAddOutline, warning } from "famicons/icons";
+import { Loader, ScannerSupported, ScannerUnsupported, Student } from "@/components";
+import { computed, ref, watchEffect } from "kdu";
+import { useRoute } from "kdu-router";
+import { useStore } from "kdux";
+import { onCheckinOrCheckout } from "@/utils/CheckinOrCheckout";
+
+const route = useRoute();
+
+const id = route.params.id;
+
+let loading = ref(false);
+let isSupported = ref<boolean>();
+let eventName = ref("");
+let hostId = ref("");
+let studentId = ref("");
+let selectedSegment = ref("checkin");
+let waiting = ref(false);
+let studentsCheckedIn = ref([]);
+let studentsCheckedOut = ref([]);
+
+const store = useStore();
+
+const userId = computed(() => store.getters.selectUserId);
+
+const redirectToHome = () => {
+  window.location.replace("/");
+}
+
+watchEffect(() => {
+  const platform = getPlatforms();
+  // showToast("Platform: " + platform);
+  // browser on desktop: tablet,mobile,mobileweb
+  // pwa: pwa,mobile,mobileweb
+  // browser on mobile: android,mobile,mobileweb
+  // android app: android,cordova,jigra,mobile,hybrid
+  const isJigra = isPlatform("jigra");
+  if (isJigra) {
+    isSupported.value = true;
+  } else {
+    isSupported.value = false;
+  }
+});
+
+const checkIsExistEvent = async () => {
+  const docRef = doc(db, "events", id);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    eventName.value = docSnap.data().title;
+    hostId.value = docSnap.data().host;
+    loading.value = false;
+    await getStudentsFromEvent();
+  } else {
+    redirectToHome();
+  }
+}
+
+const getStudentsFromEvent = async () => {
+  waiting.value = true;
+
+  const docsRef = query(
+    collection(db, "certs"),
+    where("eventId", "==", id),
+  );
+  const docsSnap = await getDocs(docsRef);
+
+  let checkinList: any = [];
+  let checkoutList: any = [];
+
+  if (!docsSnap.empty) {
+    for (const doc of docsSnap.docs) {
+      const data = doc.data();
+      if (data.checkoutAt === "") {
+        checkinList.push(data.studentId);
+      } else {
+        checkoutList.push(data.studentId);
+      }
+    }
+  }
+
+  studentsCheckedIn.value = checkinList;
+  studentsCheckedOut.value = checkoutList;
+  waiting.value = false;
+}
+
+watchEffect(() => {
+  loading.value = true;
+  checkIsExistEvent();
+});
+
+const refreshData = async () => {
+  await getStudentsFromEvent();
+}
+
+const handleRefresh = async (event: CustomEvent) => {
+  await refreshData();
+  event.target.complete();
+}
+
+const handleSegmentChange = async (event: CustomEvent) => {
+  selectedSegment.value = event.detail.value;
+  await refreshData();
+}
+
+const handleCheckinOrCheckout = async () => {
+  showToast("Vui lòng đợi...");
+
+  await onCheckinOrCheckout(id, eventName.value, hostId.value, studentId.value, userId.value)
+    .then(async (succeeded) => {
+      if (succeeded) {
+        studentId.value = "";
+        await refreshData();
+      }
+    });
+}
+</script>
+
+<template>
+  <Loader k-if="loading" color="warning" />
+  <div k-else>
+    <div>
+      <fml-refresher
+        slot="fixed"
+        @fmlRefresh="handleRefresh($event)"
+        style="z-index: 2;"
+      >
+        <fml-refresher-content></fml-refresher-content>
+      </fml-refresher>
+    </div>
+
+    <ScannerSupported
+      k-if="isSupported"
+      :ev-id="id"
+      :ev-name="eventName"
+      :host-id="hostId"
+      :refresh-data="refreshData"
+    />
+    <ScannerUnsupported
+      k-if="!isSupported"
+      :ev-id="id"
+      :ev-name="eventName"
+      :host-id="hostId"
+      :refresh-data="refreshData"
+    />
+
+    <fml-item>
+      <fml-input
+        label="Check-in/out sinh viên"
+        label-placement="floating"
+        placeholder="Nhập mã số sinh viên"
+        k-model="studentId"
+        style="flex: 1;"
+      />
+      <fml-buttons slot="end">
+        <fml-button
+          @click="() => {
+            if (studentId) {
+              handleCheckinOrCheckout();
+            } else {
+              showToast('Vui lòng nhập mã số sinh viên.');
+            }
+          }"
+        >
+          <fml-icon slot="icon-only" :icon="personAddOutline" />
+        </fml-button>
+      </fml-buttons>
+    </fml-item>
+
+    <fml-segment
+      :value="selectedSegment"
+      @fmlChange="handleSegmentChange"
+      style="margin-top: 15px;"
+    >
+      <fml-segment-button value="checkin">
+        <fml-label>Check-in</fml-label>
+      </fml-segment-button>
+      <fml-segment-button value="checkout">
+        <fml-label>Check-out</fml-label>
+      </fml-segment-button>
+    </fml-segment>
+
+    <div style="margin-top: 15px; display: flex; align-items: center;" k-if="waiting">
+      <fml-spinner color="primary" style="margin: 0 auto;" />
+    </div>
+    <div k-else>
+      <div k-if="selectedSegment === 'checkin'">
+        <fml-list>
+          <fml-item k-if="studentsCheckedIn.length === 0">
+            <fml-icon aria-hidden="true" color="warning" :icon="warning" slot="start" />
+            <fml-label>
+              <h4>Sự kiện này chưa có sinh viên nào check-in.</h4>
+            </fml-label>
+          </fml-item>
+          <template k-else k-for="(code, index) in studentsCheckedIn">
+            <Student :student-id="code" />
+          </template>
+        </fml-list>
+      </div>
+      <div k-if="selectedSegment === 'checkout'">
+        <fml-list>
+          <fml-item k-if="studentsCheckedOut.length === 0">
+            <fml-icon aria-hidden="true" color="warning" :icon="warning" slot="start" />
+            <fml-label>
+              <h4>Sự kiện này chưa có sinh viên nào check-out.</h4>
+            </fml-label>
+          </fml-item>
+          <template k-else k-for="(code, index) in studentsCheckedOut">
+            <Student :student-id="code" />
+          </template>
+        </fml-list>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+</style>

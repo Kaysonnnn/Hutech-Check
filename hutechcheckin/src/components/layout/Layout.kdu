@@ -1,0 +1,118 @@
+<script setup lang="ts">
+import {
+  FmlAvatar,
+  FmlButton,
+  FmlButtons,
+  FmlChip,
+  FmlContent,
+  FmlHeader,
+  FmlIcon,
+  FmlLabel,
+  FmlPage,
+  FmlSpinner,
+  FmlTitle,
+  FmlToolbar,
+} from "@familyjs/kdu";
+import { logOutOutline, contrastOutline } from "famicons/icons";
+import avatar from "@/assets/avatar.svg";
+import { computed, ref } from "kdu";
+import { useStore } from "kdux";
+import { Dialog } from "@jigra/dialog";
+import { getFromLocalStorage, removeFromLocalStorage, saveToLocalStorage } from "@/utils/LocalStorage";
+import axios from "axios";
+import { AUTH_API_URL } from "@/const";
+import { showToast } from "@/utils/Toast";
+
+let waitingLogout = ref(false);
+
+const store = useStore();
+
+const isLoggedIn = computed(() => store.getters.selectIsLoggedIn);
+const studentId = computed(() => store.getters.selectStudentId);
+
+const switchTheme = () => {
+  const body = document.body;
+  if (body.getAttribute("color-theme") === "light" || body.getAttribute("color-theme") === null) {
+    body.setAttribute("color-theme", "dark");
+    saveToLocalStorage("use-theme", "dark");
+  } else {
+    body.setAttribute("color-theme", "light");
+    saveToLocalStorage("use-theme", "light");
+  }
+}
+
+const redirectToLogin = () => {
+  window.location.replace("/login");
+}
+
+const handleLogout = async () => {
+  const { value } = await Dialog.confirm({
+    title: "Đăng xuất",
+    message: "Bạn có chắc chắn muốn đăng xuất không?"
+  });
+
+  if (value) {
+    waitingLogout.value = true;
+    const token = getFromLocalStorage("use-state");
+    try {
+      const res = await axios.post(
+        `${AUTH_API_URL}/logout`,
+        {
+          token: token.refreshToken,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
+      if (res.status == 200) {
+        removeFromLocalStorage("use-state");
+        store.dispatch("removeActiveStudent");
+        redirectToLogin();
+      }
+    } catch (e: any) {
+      showToast("Đăng xuất thất bại.");
+      waitingLogout.value = false;
+    }
+  } else {
+    // không làm gì cả
+  }
+}
+
+const goTo = (path: string) => {
+  window.location.replace(path);
+}
+</script>
+
+<template>
+  <fml-page>
+    <fml-header>
+      <fml-toolbar>
+        <fml-title>HUTECH Checkins</fml-title>
+        <fml-buttons slot="primary">
+          <fml-button @click="switchTheme()">
+            <fml-icon slot="icon-only" :icon="contrastOutline" />
+          </fml-button>
+          <fml-chip k-if="isLoggedIn" @click="goTo('/student')">
+            <fml-avatar>
+              <img :src="avatar" />
+            </fml-avatar>
+            <fml-label>{{ studentId }}</fml-label>
+          </fml-chip>
+          <fml-button @click="handleLogout()" k-if="isLoggedIn && !waitingLogout">
+            <fml-icon slot="icon-only" :icon="logOutOutline" color="danger" />
+          </fml-button>
+          <fml-spinner k-if="waitingLogout" color="danger" />
+        </fml-buttons>
+      </fml-toolbar>
+    </fml-header>
+
+    <fml-content>
+      <slot></slot>
+    </fml-content>
+  </fml-page>
+</template>
+
+<style scoped>
+</style>

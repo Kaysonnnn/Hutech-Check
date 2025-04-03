@@ -1,0 +1,145 @@
+<script setup lang="ts">
+import { CefCard } from "@/components";
+import { db } from "@/firebase/config";
+import {
+  FmlButton,
+  FmlCol,
+  FmlGrid,
+  FmlIcon,
+  FmlRow,
+  FmlRefresher,
+  FmlRefresherContent,
+  FmlSpinner,
+  FmlText,
+} from "@familyjs/kdu";
+import { DocumentSnapshot, collection, doc, getDoc, getDocs, query, where } from "@firebase/firestore";
+import { warning } from "famicons/icons";
+import { computed, ref, watchEffect } from "kdu";
+import { useStore } from "kdux";
+
+const loading = ref(false);
+const certs = ref<any>(null);
+
+const store = useStore();
+
+const fullName = computed(() => store.getters.selectFullName);
+const studentId = computed(() => store.getters.selectStudentId);
+const studentEmail = computed(() => store.getters.selectEmail);
+
+const getEvent = async () => {
+  const docsRef = collection(db, "certs");
+  const docQuery = query(
+    docsRef,
+    where("studentId", "==", studentId.value)
+  );
+  const docSnap = await getDocs(docQuery);
+
+  let allDoc: Promise<any>[] = [];
+
+  docSnap.docs.map(async (doc: DocumentSnapshot) => {
+    if (doc.exists()) {
+      if (doc.data().checkoutAt === "") {
+        const getData = getPromiseData(
+          doc.data().eventId,
+          doc.data().studentId,
+        );
+        allDoc.push(
+          getData.then(({ stData, evData }) => ({
+            id: doc.data().id,
+            certId: doc.data().certId,
+            studentId: doc.data().studentId,
+            fullName: stData.fullName,
+            studyClass: stData.studyClass,
+            title: evData.title,
+            host: evData.host,
+            templateId: evData.template,
+            date: evData.date,
+            room: evData.room,
+            checkinAt: doc.data().checkinAt,
+            display: evData.display,
+          })),
+        );
+      }
+    }
+  });
+
+  certs.value = (await Promise.all(allDoc)).sort((a: any, b: any) => {
+    const aDate = new Date(a.date).getTime();
+    const bDate = new Date(b.date).getTime();
+    return bDate - aDate;
+  });;
+  loading.value = false;
+};
+
+const getPromiseData = async (
+  eventId: string,
+  studentId: string,
+) => {
+  let stData: any = [];
+  const stSnap = await getDoc(doc(db, "students", studentId));
+  if (stSnap.exists()) {
+    stData = stSnap.data();
+  }
+
+  let evData: any = [];
+  const evSnap = await getDoc(doc(db, "events", eventId));
+  if (evSnap.exists()) {
+    evData = evSnap.data();
+  }
+
+  return { stData, evData };
+};
+
+watchEffect(() => {
+  loading.value = true;
+  getEvent();
+});
+
+const handleRefresh = async (event: CustomEvent) => {
+  certs.value = null;
+  await getEvent();
+  event.target.complete();
+}
+</script>
+
+<template>
+  <div>
+    <fml-refresher
+      slot="fixed"
+      @fmlRefresh="handleRefresh($event)"
+      style="z-index: 2;"
+    >
+      <fml-refresher-content></fml-refresher-content>
+    </fml-refresher>
+
+    <fml-text color="warning" k-if="!studentEmail">
+      <fml-icon :icon="warning" /> Vui lòng thêm Email
+      để đảm bảo tài khoản được bảo vệ an toàn hơn.
+      <fml-button href="/student">Cập nhật</fml-button>
+    </fml-text>
+
+    <fml-text>
+      <h3>Xin chào, {{ fullName }}</h3>
+    </fml-text>
+    <p>
+      Dưới đây là các sự kiện bạn đã tham gia và được check-in.
+      <br />
+      Bấm vào sự kiện bên dưới để nhận giấy chứng nhận.
+    </p>
+
+    <fml-spinner k-if="loading" color="primary" />
+    <fml-grid k-else>
+      <fml-row>
+        <p k-if="certs == null">Bạn chưa tham dự sự kiện nào.</p>
+        <template k-else k-for="(cert, index) in certs">
+          <fml-col size="12" size-sm="6" size-md="3" k-if="cert.display">
+            <CefCard :cert="cert" :key="index" />
+          </fml-col>
+        </template>
+      </fml-row>
+    </fml-grid>
+  </div>
+</template>
+
+<style scoped>
+</style>

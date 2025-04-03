@@ -1,0 +1,44 @@
+<script setup lang="ts">
+import { FmlImg, FmlSpinner } from '@familyjs/kdu';
+
+defineProps({
+  color: {
+    type: String as () => "danger" | "dark" | "light" | "medium" | "primary" | "secondary" | "success" | "tertiary" | "warning" | undefined,
+    default: undefined,
+  },
+  name: {
+    type: String as () => "bubbles" | "circles" | "circular" | "crescent" | "dots" | "lines" | "lines-sharp" | "lines-sharp-small" | "lines-small" | undefined,
+    default: undefined,
+  },
+});
+</script>
+
+<template>
+  <div class="loader-container">
+    <fml-img src="/favicon.jpg" />
+    <fml-spinner :color="color" :name="name" />
+  </div>
+</template>
+
+<style scoped>
+.loader-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100%;
+}
+
+fml-img {
+  width: 65px;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+fml-spinner {
+  width: 45px;
+  height: 45px;
+}
+</style>

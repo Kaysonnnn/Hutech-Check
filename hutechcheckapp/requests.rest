@@ -1,0 +1,11 @@
+GET http://localhost:5174/
+
+###
+
+POST http://localhost:5174/v1/checkin/thank-you
+Content-Type: application/json
+
+{
+  "eventName": "Test",
+  "studentId": "2180602080"
+}

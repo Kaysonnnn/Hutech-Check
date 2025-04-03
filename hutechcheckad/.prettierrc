@@ -1,0 +1,13 @@
+<<<<<<< HEAD
+semi: false
+singleQuote: true
+printWidth: 80
+trailingComma: 'none'
+arrowParens: 'avoid'
+=======
+semi: false
+singleQuote: true
+printWidth: 80
+trailingComma: 'none'
+arrowParens: 'avoid'
+>>>>>>> 7051f79 (First commit)

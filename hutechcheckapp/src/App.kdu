@@ -1,0 +1,61 @@
+<script setup lang="ts">
+import { FmlApp, FmlRouterOutlet } from '@familyjs/kdu';
+import { Layout, Loader } from '@/components';
+import { onAuthStateChanged } from '@firebase/auth';
+import { auth, db } from '@/firebase/config';
+import { doc, getDoc } from '@firebase/firestore';
+import { useStore } from 'kdux';
+import { ref, watchEffect } from 'kdu';
+import { getFromLocalStorage } from '@/utils/LocalStorage';
+
+let loading = ref(true);
+
+const setTheme = () => {
+  const theme = getFromLocalStorage("use-theme");
+  if (theme != null) {
+    document.body.setAttribute("color-theme", theme);
+  } else {
+    document.body.setAttribute("color-theme", "light");
+  }
+};
+
+watchEffect(() => {
+  setTheme();
+});
+
+const store = useStore();
+
+onAuthStateChanged(auth, async (user: any) => {
+  if (user) {
+    const docRef = doc(db, "accounts", user.uid);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      const docData = docSnap.data();
+      store.dispatch("setActiveUser", {
+        user: {
+          isLoggedIn: true,
+          userId: user.uid,
+          email: user.email,
+          fullName: docData.fullName,
+        }
+      })
+    }
+  } else {
+    store.dispatch("removeActiveUser");
+  }
+  loading.value = false;
+});
+</script>
+
+<template>
+  <Loader k-if="loading" color="warning" />
+  <fml-app k-if="!loading">
+    <Layout>
+      <fml-router-outlet class="fml-padding" style="overflow-y: auto;" />
+    </Layout>
+  </fml-app>
+</template>
+
+<style scoped>
+</style>

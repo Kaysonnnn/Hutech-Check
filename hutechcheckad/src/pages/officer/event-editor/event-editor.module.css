@@ -1,0 +1,26 @@
+.geminiButton {
+  background: linear-gradient(
+    74deg,
+    #4285f4 0,
+    #9b72cb 14.3%,
+    #d96570 28.6%,
+    #d96570 42.9%,
+    #9b72cb 57.2%,
+    #4285f4 71.5%,
+    #9b72cb 85.8%,
+    #d96570 100%
+  );
+  background-size: 400% 100%;
+  color: var(--mantine-color-white);
+  border-width: 0;
+  animation: bgAnim 3.5s linear infinite;
+}
+
+@keyframes bgAnim {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 100% 100%;
+  }
+}

@@ -1,0 +1,2 @@
+export const AI_PROMPT =
+  'Trường Đại học Công nghệ tp.HCM (HUTECH) sắp diễn ra sự kiện "{event_title}" vào ngày {event_date}, tại {event_room}. Hãy viết mô tả tóm tắt (summary) gây thu hút người tham dự về sự kiện này, và viết mô tả chi tiết đầy đủ (description ở dạng HTML để sử dụng trong @tiptap/editor) dài về nó bao gồm cả đối tượng tham dự, những điều lưu ý, lời cảm ơn,... ở định dạng JSON gồm 2 trường summary và description.'

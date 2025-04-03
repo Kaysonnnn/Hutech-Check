@@ -1,0 +1,25 @@
+<<<<<<< HEAD
+{
+  "hosting": {
+    "site": "hutechcheckad",
+    "public": "dist/client",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  }
+}
+=======
+{
+  "hosting": {
+    "site": "hutechcheckad",
+    "public": "dist/client",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  }
+}
+>>>>>>> 7051f79 (First commit)

@@ -1,0 +1,257 @@
+<script setup lang="ts">
+import { db } from "@/firebase/config";
+import {
+  FmlButton,
+  FmlButtons,
+  FmlCard,
+  FmlCardContent,
+  FmlCardHeader,
+  FmlCardTitle,
+  FmlContent,
+  FmlHeader,
+  FmlIcon,
+  FmlModal,
+  FmlSpinner,
+  FmlText,
+  FmlTitle,
+  FmlToolbar,
+} from "@familyjs/kdu";
+import { doc, getDoc } from "@firebase/firestore";
+import { businessOutline, calendarOutline, closeOutline, downloadOutline } from "famicons/icons";
+import event_img from "@/assets/icon_event.jpg";
+import { computed, ref } from "kdu";
+import { useStore } from "kdux";
+import { getFullDateOf } from "@/const";
+
+const props = defineProps(['cert']);
+
+let isOpen = ref(false);
+
+let canvasRef = ref<HTMLCanvasElement | null>(null);
+let isCanvasLoading = ref(true);
+const cefWidth = 3371;
+const cefHeight = 2420;
+
+const store = useStore();
+
+const studentName = computed(() => store.getters.selectFullName);
+const studentCode = computed(() => store.getters.selectStudentId);
+
+const drawImage = (template: any, host: any) => {
+  const canvas = canvasRef.value;
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+
+  const image = new Image();
+  image.setAttribute("crossorigin", "anonymous");
+  image.src = template.image;
+
+  image.onload = () => {
+    isCanvasLoading.value = false;
+
+    // Đặt kích thước canvas
+    canvas.width = cefWidth;
+    canvas.height = cefHeight;
+
+    // Vẽ hình ảnh lên canvas với kích thước cố định
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(image, 0, 0, cefWidth, cefHeight);
+
+    // Đặt thông tin
+    ctx.textAlign = "center";
+
+    // Tên sinh viên
+    ctx.font = `bold ${template.studentNameFs}pt Arial`;
+    ctx.fillStyle = template.studentNameColor;
+    if (template.isDisplayStudentName) {
+      ctx.fillText(studentName.value, template.studentNameX, template.studentNameY);
+    }
+
+    // Mã số sinh viên
+    ctx.font = `${template.studentCodeFs}pt Arial`;
+    ctx.fillStyle = template.studentCodeColor;
+    if (template.isDisplayStudentCode) {
+      ctx.fillText(
+        "MSSV: " + studentCode.value,
+        template.studentCodeX,
+        template.studentCodeY
+      );
+    }
+
+    // Đơn vị tổ chứ
+    ctx.font = `${template.cefHostFs}pt Arial`;
+    ctx.fillStyle = template.cefHostColor;
+    if (template.isDisplayCefHost && host.length != 0) {
+      ctx.fillText(props.cert.host, template.cefHostX, template.cefHostY);
+    }
+
+    // Event name
+    ctx.font = `${template.eventTitleFs}pt Arial`;
+    ctx.fillStyle = template.eventTitleColor;
+    let maxW = 2930;
+    let lines = textGetLines(ctx, props.cert.title.toUpperCase(), maxW);
+    let lineY = 65;
+    let startY = template.eventTitleY - (lines.length - 1) * lineY;
+
+    if (template.isDisplayEventTitle) {
+      for (let i = 0; i < lines.length; i++) {
+        ctx.fillText(lines[i], template.eventTitleX, startY + i * lineY * 2);
+      }
+    }
+
+    // Set info day, month, year and cef number
+    ctx.font = `italic ${template.cefDayFs}pt Arial`;
+    ctx.fillStyle = template.cefDayColor;
+    if (template.isDisplayCefDay) {
+      ctx.fillText(
+        new Date(props.cert.date).getDate().toFixed(),
+        template.cefDayX,
+        template.cefDayY
+      );
+    }
+    if (template.isDisplayCefMonth) {
+      ctx.fillText(
+        (new Date(props.cert.date).getMonth() + 1).toFixed(),
+        template.cefMonthX,
+        template.cefMonthY
+      );
+    }
+    if (template.isDisplayCefYear) {
+      ctx.fillText(
+        new Date(props.cert.date).getFullYear().toFixed().slice(-2),
+        template.cefYearX,
+        template.cefYearY
+      );
+    }
+
+    ctx.font = `${template.cefNoFs}pt Arial`;
+    ctx.fillStyle = template.cefNoColor;
+    ctx.textAlign = "left";
+    if (template.isDisplayCefNo) {
+      ctx.fillText(
+        `Số:     ${props.cert.certId}`,
+        template.cefNoX,
+        template.cefNoY
+      );
+    }
+  }
+}
+
+const textGetLines = (ctx: any, text: string, maxWidth: number) => {
+  const words = text.split(" ");
+  const lines = [];
+  let currentLine = words[0];
+
+  for (let i = 1; i < words.length; i++) {
+    const word = words[i];
+    const width = ctx.measureText(currentLine + " " + word).width;
+    if (width < maxWidth) {
+      currentLine += " " + word;
+    } else {
+      lines.push(currentLine);
+      currentLine = word;
+    }
+  }
+  lines.push(currentLine);
+  return lines;
+};
+
+const drawCef = async () => {
+  const tempRef = doc(db, "templates", props.cert.templateId);
+  const tempSnap = await getDoc(tempRef);
+
+  if (tempSnap.exists()) {
+    const templateData = tempSnap.data();
+
+    if (props.cert.host !== "") {
+      const hostRef = doc(db, "hosts", props.cert.host);
+      const hostSnap = await getDoc(hostRef);
+
+      if (hostSnap.exists()) {
+        const hostData = hostSnap.data();
+        drawImage(templateData, hostData);
+      }
+    } else {
+      drawImage(templateData, []);
+    }
+  }
+};
+
+const downloadCef = () => {
+  const canvas = canvasRef.value;
+  if (!canvas) {
+    return;
+  }
+
+  const url = canvas
+    .toDataURL("image/png")
+    .replace("image/png", "image/octet-stream");
+  const link = document.createElement("a");
+  const splitCertId = props.cert.certId.split("/");
+  link.download = `chungnhan_${splitCertId[0]}_${splitCertId[1]}.png`;
+  link.href = url;
+  link.click();
+};
+
+const openModal = async () => {
+  isCanvasLoading.value = true;
+  drawCef();
+  isOpen.value = true;
+};
+
+const closeModal = () => {
+  isOpen.value = false;
+  isCanvasLoading.value = true;
+};
+</script>
+
+<template>
+  <fml-card button type="button" @click="openModal()">
+    <img alt="Event image" :src="event_img" />
+    <fml-card-header>
+      <fml-card-title>{{ cert.title }}</fml-card-title>
+    </fml-card-header>
+    
+    <fml-card-content>
+      <fml-text style="display: flex; justify-content: space-between;">
+        <div>
+          <fml-icon :icon="calendarOutline" /> {{ getFullDateOf(cert.date) }}
+        </div>
+        <div k-if="cert.room !== ''">
+          <fml-icon :icon="businessOutline" /> {{ cert.room }}
+        </div>
+      </fml-text>
+    </fml-card-content>
+  </fml-card>
+
+  <fml-modal :is-open="isOpen" :backdrop-dismiss="false">
+    <div id="fml-kdu-wrapper" class="fml-delegate-host" style="display: flex; flex-direction: column; height: 100%;">
+      <fml-header>
+        <fml-toolbar>
+          <fml-title>Chứng nhận</fml-title>
+          <fml-buttons slot="end">
+            <fml-button @click="closeModal()" color="danger">
+              <fml-icon slot="start" :icon="closeOutline" />
+              Đóng
+            </fml-button>
+          </fml-buttons>
+        </fml-toolbar>
+      </fml-header>
+      <fml-content class="fml-padding">
+        <fml-spinner k-if="isCanvasLoading" color="primary" />
+        <canvas style="width: 100%;" ref="canvasRef" />
+        <div style="width: 100%; display: flex; justify-content: center; margin-top: 15px;">
+          <fml-button k-if="!isCanvasLoading" @click="downloadCef()">
+            <fml-icon slot="start" :icon="downloadOutline" />
+            Tải chứng nhận
+          </fml-button>
+        </div>
+      </fml-content>
+    </div>
+  </fml-modal>
+</template>
+
+<style scoped>
+</style>

@@ -1,0 +1,139 @@
+<script setup lang="ts">
+import { FmlButton, FmlIcon, FmlSpinner, FmlText, loadingController } from "@familyjs/kdu";
+import { logoGooglePlaystore, warning } from "famicons/icons";
+import { computed, onMounted, ref, watchEffect } from 'kdu';
+import { useStore } from "kdux";
+import jsQR from "jsqr";
+import { onCheckinOrCheckout } from "@/utils/CheckinOrCheckout";
+
+const store = useStore();
+
+const userId = computed(() => store.getters.selectUserId);
+
+const props = defineProps(['evId', 'evName', 'hostId', 'refreshData']);
+
+const videoRef = ref<HTMLVideoElement | null>(null);
+const canvasRef = ref<HTMLCanvasElement | null>(null);
+let videoElement: any = null;
+let canvasElement: any = null;
+let canvasContext: any = null;
+let animationFrameId: number | null = null;
+let loading: HTMLFmlLoadingElement | null = null;
+
+let waiting = ref(false);
+
+onMounted(() => {
+  videoElement = videoRef.value;
+  canvasElement = canvasRef.value;
+  canvasContext = canvasElement.getContext("2d");
+})
+
+const startScan = async () => {
+  const stream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: 'environment' }
+  });
+
+  loading = await loadingController.create({
+    message: 'Đang chuẩn bị camera...',
+  });
+  await loading.present();
+
+  videoElement.srcObject = stream;
+  videoElement.setAttribute('playsinline', true);
+  videoElement.play();
+
+  animationFrameId = requestAnimationFrame(scan);
+}
+
+const scan = async () => {
+  // console.log("Scanning...");
+  if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
+    if (loading) {
+      await loading.dismiss();
+      loading = null;
+      waiting.value = false;
+    }
+
+    canvasElement.width = videoElement.videoWidth;
+    canvasElement.height = videoElement.videoHeight;
+
+    canvasContext.drawImage(
+      videoElement,
+      0,
+      0,
+      canvasElement.width,
+      canvasElement.height,
+    );
+
+    const imageData = canvasContext.getImageData(
+      0,
+      0,
+      canvasElement.width,
+      canvasElement.height,
+    );
+
+    const code = jsQR(imageData.data, imageData.width, imageData.height, {
+      inversionAttempts: "dontInvert",
+    });
+    if (code) {
+      waiting.value = true;
+
+      loading = await loadingController.create({
+        message: 'Đang xử lý...',
+      });
+      await loading.present();
+
+      await onCheckinOrCheckout(props.evId, props.evName, props.hostId, code.data, userId.value)
+        .then(async (succeeded) => {
+          if (succeeded) {
+            props.refreshData();
+          }
+        });
+
+      setTimeout(() => {
+        waiting.value = false;
+      }, 2000);
+    }
+    
+    animationFrameId = requestAnimationFrame(scan);
+  } else {
+    animationFrameId = requestAnimationFrame(scan);
+  }
+}
+
+watchEffect(() => {
+  waiting.value = true;
+  startScan();
+})
+</script>
+
+<template>
+  <div style="margin-bottom: 15px;">
+    <p>
+      <fml-text color="warning">
+        <fml-icon :icon="warning" /> Bạn đang sử dụng nền tảng không hỗ
+        trợ Jigra (như Trình duyệt Web, PWA), để tăng trải nghiệm tốt hơn với
+        Trình quét mã QR thông minh, hãy tải
+        <fml-button
+          size="small"
+          href="https://play.google.com/store/apps/details?id=com.hutechcheckin.scanner"
+          target="_blank"
+        >
+          <fml-icon slot="start" :icon="logoGooglePlaystore" />
+          ứng dụng Android
+        </fml-button>
+        hoặc nhập mã số sinh viên thủ công.
+      </fml-text>
+    </p>
+
+    <div k-if="waiting" style="display: flex; align-items: center;">
+      <fml-spinner color="primary" style="margin: 0 auto;" />
+    </div>
+
+    <video id="video" :hidden="waiting" width="100%" ref="videoRef" />
+    <canvas hidden ref="canvasRef" />
+  </div>
+</template>
+
+<style scoped>
+</style>

@@ -1,0 +1,69 @@
+<script setup lang="ts">
+import { onCheckinOrCheckout } from "@/utils/CheckinOrCheckout";
+import { requestBarcodeScannerPermission } from "@/utils/Permissions";
+import { showToast } from "@/utils/Toast";
+import { FmlFab, FmlFabButton, FmlIcon } from "@familyjs/kdu";
+import { BarcodeFormat, BarcodeScanner } from "@jigra-mlkit/barcode-scanning";
+import { scan } from "famicons/icons";
+import { computed, watchEffect } from "kdu";
+import { useStore } from "kdux";
+
+const store = useStore();
+
+const userId = computed(() => store.getters.selectUserId);
+
+const props = defineProps(['evId', 'evName', 'hostId', 'refreshData']);
+
+const scanCode = async () => {
+  const granted = await requestBarcodeScannerPermission();
+  if (!granted) {
+    showToast("Ứng dụng cần quyền truy cập máy ảnh để quét mã QR.");
+    return;
+  }
+  await BarcodeScanner.isGoogleBarcodeScannerModuleAvailable()
+    .then(async (data) => {
+      if (data.available) {
+        await startScanning().then(async (studentId) => {
+          showToast("Vui lòng đợi...");
+
+          const succeeded = await onCheckinOrCheckout(props.evId, props.evName, props.hostId, studentId, userId.value);
+          if (succeeded) {
+            props.refreshData();
+          }
+
+          setTimeout(() => {
+            scanCode();
+          }, 2000);
+        });
+      } else {
+        showToast("Đang đợi cài module quét mã...");
+        await BarcodeScanner.installGoogleBarcodeScannerModule()
+          .then(async () => {
+            showToast("Đã cài xong module, vui lòng mở lại tính năng này.");
+          });
+      }
+    });
+}
+
+const startScanning = async () => {
+  const { barcodes: codes } = await BarcodeScanner.scan({
+    formats: [BarcodeFormat.QrCode],
+  });
+  return codes[0].rawValue.toString();
+}
+
+watchEffect(() => {
+  scanCode();
+});
+</script>
+
+<template>
+  <fml-fab slot="fixed" vertical="bottom" horizontal="center">
+    <fml-fab-button style="margin: auto;" @click="scanCode">
+      <fml-icon :icon="scan" />
+    </fml-fab-button>
+  </fml-fab>
+</template>
+
+<style scoped>
+</style>

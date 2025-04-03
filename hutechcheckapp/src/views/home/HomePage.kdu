@@ -1,0 +1,50 @@
+<script setup lang="ts">
+import { FmlItem, FmlLabel, FmlList, FmlRefresher, FmlRefresherContent } from "@familyjs/kdu";
+import { eyeOutline } from "famicons/icons";
+import useFetchCollection from '@/customAPI/useFetchCollection';
+import { getFullDateOf } from "@/const";
+import { Loader } from "@/components";
+
+const { data: events, isLoading, doRefresh } = useFetchCollection("events", "date");
+</script>
+
+<template>
+  <Loader k-if="isLoading" color="warning" />
+  <template k-else>
+    <div>
+      <fml-refresher
+        slot="fixed"
+        @fmlRefresh="doRefresh($event)"
+      >
+        <fml-refresher-content></fml-refresher-content>
+      </fml-refresher>
+    </div>
+
+    <p k-if="events.length === 0">
+      Chưa có sự kiện nào để check-in.
+    </p>
+    
+    <fml-list k-else lines="full">
+      <template k-for="(event, index) in events">
+        <fml-item
+          k-if="event.allowCheckin"
+          :key="index"
+          :href="`/checkin/${event.id}`"
+          detail="true"
+          :detail-icon="eyeOutline"
+        >
+          <fml-label>
+            <h3>{{ event.title }}</h3>
+            <p>
+              {{ event.room && `Phòng ${event.room} - ` }}
+              {{ getFullDateOf(event.date) }}
+            </p>
+          </fml-label>
+        </fml-item>
+      </template>
+    </fml-list>
+  </template>
+</template>
+
+<style scoped>
+</style>

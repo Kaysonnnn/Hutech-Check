@@ -1,0 +1,31 @@
+<script setup lang="ts">
+import { FmlTabBar, FmlTabButton, FmlTabs, FmlLabel, FmlIcon, FmlPage, FmlRouterOutlet } from '@familyjs/kdu';
+import { homeOutline, personCircleOutline } from 'famicons/icons';
+
+const goTo = (path: string) => {
+  window.location.replace(path);
+};
+</script>
+
+<template>
+  <fml-page>
+    <fml-tabs>
+      <fml-router-outlet class="fml-padding" style="overflow-y: auto;" />
+
+      <fml-tab-bar slot="bottom">
+        <fml-tab-button tab="tab1" href="/home" @click="goTo('/home')">
+          <fml-icon aria-hidden="true" :icon="homeOutline" />
+          <fml-label>Trang chủ</fml-label>
+        </fml-tab-button>
+
+        <fml-tab-button tab="tab2" href="/student" @click="goTo('/student')">
+          <fml-icon aria-hidden="true" :icon="personCircleOutline" />
+          <fml-label>Tài khoản</fml-label>
+        </fml-tab-button>
+      </fml-tab-bar>
+    </fml-tabs>
+  </fml-page>
+</template>
+
+<style scoped>
+</style>

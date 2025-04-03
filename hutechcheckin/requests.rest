@@ -1,0 +1,52 @@
+GET http://localhost:5174/
+
+###
+
+GET http://localhost:5174/v1/auth/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdHVkZW50SWQiOiIyMTgwNjAyMDgwIiwiaWF0IjoxNzEyNDk1NjE0LCJleHAiOjE3MTI0OTU2Mjl9.mfGOzt0u0yuM9JmHb6hgdAeFoQLNsFL5dpdXyJTjmvw
+
+###
+
+POST http://localhost:5174/v1/auth/token
+Content-Type: application/json
+
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdHVkZW50SWQiOiIyMTgwNjAyMDgwIiwiaWF0IjoxNzEyNDk1NzkwfQ.kmtiOsq-4ToH71POJyab7JwrhG9u9545VeTT_XjqjGM"
+}
+
+###
+
+POST http://localhost:5174/v1/auth/logout
+Content-Type: application/json
+
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdHVkZW50SWQiOiIyMTgwNjAyMDgwIiwiaWF0IjoxNzEyNDk1NzkwfQ.kmtiOsq-4ToH71POJyab7JwrhG9u9545VeTT_XjqjGM"
+}
+
+###
+
+POST http://localhost:5174/v1/auth/login
+Content-Type: application/json
+
+{
+  "studentId": "2180602081"
+}
+
+###
+
+POST http://localhost:5174/v1/auth/request-otp
+Content-Type: application/json
+
+{
+  "studentId": "2180602080"
+}
+
+###
+
+POST http://localhost:5174/v1/auth/verify-otp
+Content-Type: application/json
+
+{
+  "studentId": "2180602080",
+  "otp": "XE4WcdAKl6"
+}

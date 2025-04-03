@@ -1,0 +1,235 @@
+/* Family Variables and Theming. For more info, please see:
+http://family-js.web.app/docs/theming/ */
+
+/** Family CSS Variables **/
+:root {
+  /** primary **/
+  --fml-color-primary: #3880ff;
+  --fml-color-primary-rgb: 56, 128, 255;
+  --fml-color-primary-contrast: #ffffff;
+  --fml-color-primary-contrast-rgb: 255, 255, 255;
+  --fml-color-primary-shade: #3171e0;
+  --fml-color-primary-tint: #4c8dff;
+
+  /** secondary **/
+  --fml-color-secondary: #3dc2ff;
+  --fml-color-secondary-rgb: 61, 194, 255;
+  --fml-color-secondary-contrast: #ffffff;
+  --fml-color-secondary-contrast-rgb: 255, 255, 255;
+  --fml-color-secondary-shade: #36abe0;
+  --fml-color-secondary-tint: #50c8ff;
+
+  /** tertiary **/
+  --fml-color-tertiary: #5260ff;
+  --fml-color-tertiary-rgb: 82, 96, 255;
+  --fml-color-tertiary-contrast: #ffffff;
+  --fml-color-tertiary-contrast-rgb: 255, 255, 255;
+  --fml-color-tertiary-shade: #4854e0;
+  --fml-color-tertiary-tint: #6370ff;
+
+  /** success **/
+  --fml-color-success: #2dd36f;
+  --fml-color-success-rgb: 45, 211, 111;
+  --fml-color-success-contrast: #ffffff;
+  --fml-color-success-contrast-rgb: 255, 255, 255;
+  --fml-color-success-shade: #28ba62;
+  --fml-color-success-tint: #42d77d;
+
+  /** warning **/
+  --fml-color-warning: #ffc409;
+  --fml-color-warning-rgb: 255, 196, 9;
+  --fml-color-warning-contrast: #000000;
+  --fml-color-warning-contrast-rgb: 0, 0, 0;
+  --fml-color-warning-shade: #e0ac08;
+  --fml-color-warning-tint: #ffca22;
+
+  /** danger **/
+  --fml-color-danger: #eb445a;
+  --fml-color-danger-rgb: 235, 68, 90;
+  --fml-color-danger-contrast: #ffffff;
+  --fml-color-danger-contrast-rgb: 255, 255, 255;
+  --fml-color-danger-shade: #cf3c4f;
+  --fml-color-danger-tint: #ed576b;
+
+  /** dark **/
+  --fml-color-dark: #222428;
+  --fml-color-dark-rgb: 34, 36, 40;
+  --fml-color-dark-contrast: #ffffff;
+  --fml-color-dark-contrast-rgb: 255, 255, 255;
+  --fml-color-dark-shade: #1e2023;
+  --fml-color-dark-tint: #383a3e;
+
+  /** medium **/
+  --fml-color-medium: #92949c;
+  --fml-color-medium-rgb: 146, 148, 156;
+  --fml-color-medium-contrast: #ffffff;
+  --fml-color-medium-contrast-rgb: 255, 255, 255;
+  --fml-color-medium-shade: #808289;
+  --fml-color-medium-tint: #9d9fa6;
+
+  /** light **/
+  --fml-color-light: #f4f5f8;
+  --fml-color-light-rgb: 244, 245, 248;
+  --fml-color-light-contrast: #000000;
+  --fml-color-light-contrast-rgb: 0, 0, 0;
+  --fml-color-light-shade: #d7d8da;
+  --fml-color-light-tint: #f5f6f9;
+}
+
+/* @media (prefers-color-scheme: dark) { */
+/*
+   * Dark Colors
+   * -------------------------------------------
+   */
+
+body[color-theme="dark"] {
+  --fml-color-primary: #428cff;
+  --fml-color-primary-rgb: 66, 140, 255;
+  --fml-color-primary-contrast: #ffffff;
+  --fml-color-primary-contrast-rgb: 255, 255, 255;
+  --fml-color-primary-shade: #3a7be0;
+  --fml-color-primary-tint: #5598ff;
+
+  --fml-color-secondary: #50c8ff;
+  --fml-color-secondary-rgb: 80, 200, 255;
+  --fml-color-secondary-contrast: #ffffff;
+  --fml-color-secondary-contrast-rgb: 255, 255, 255;
+  --fml-color-secondary-shade: #46b0e0;
+  --fml-color-secondary-tint: #62ceff;
+
+  --fml-color-tertiary: #6a64ff;
+  --fml-color-tertiary-rgb: 106, 100, 255;
+  --fml-color-tertiary-contrast: #ffffff;
+  --fml-color-tertiary-contrast-rgb: 255, 255, 255;
+  --fml-color-tertiary-shade: #5d58e0;
+  --fml-color-tertiary-tint: #7974ff;
+
+  --fml-color-success: #2fdf75;
+  --fml-color-success-rgb: 47, 223, 117;
+  --fml-color-success-contrast: #000000;
+  --fml-color-success-contrast-rgb: 0, 0, 0;
+  --fml-color-success-shade: #29c467;
+  --fml-color-success-tint: #44e283;
+
+  --fml-color-warning: #ffd534;
+  --fml-color-warning-rgb: 255, 213, 52;
+  --fml-color-warning-contrast: #000000;
+  --fml-color-warning-contrast-rgb: 0, 0, 0;
+  --fml-color-warning-shade: #e0bb2e;
+  --fml-color-warning-tint: #ffd948;
+
+  --fml-color-danger: #ff4961;
+  --fml-color-danger-rgb: 255, 73, 97;
+  --fml-color-danger-contrast: #ffffff;
+  --fml-color-danger-contrast-rgb: 255, 255, 255;
+  --fml-color-danger-shade: #e04055;
+  --fml-color-danger-tint: #ff5b71;
+
+  --fml-color-dark: #f4f5f8;
+  --fml-color-dark-rgb: 244, 245, 248;
+  --fml-color-dark-contrast: #000000;
+  --fml-color-dark-contrast-rgb: 0, 0, 0;
+  --fml-color-dark-shade: #d7d8da;
+  --fml-color-dark-tint: #f5f6f9;
+
+  --fml-color-medium: #989aa2;
+  --fml-color-medium-rgb: 152, 154, 162;
+  --fml-color-medium-contrast: #000000;
+  --fml-color-medium-contrast-rgb: 0, 0, 0;
+  --fml-color-medium-shade: #86888f;
+  --fml-color-medium-tint: #a2a4ab;
+
+  --fml-color-light: #222428;
+  --fml-color-light-rgb: 34, 36, 40;
+  --fml-color-light-contrast: #ffffff;
+  --fml-color-light-contrast-rgb: 255, 255, 255;
+  --fml-color-light-shade: #1e2023;
+  --fml-color-light-tint: #383a3e;
+}
+
+/*
+   * iOS Dark Theme
+   * -------------------------------------------
+   */
+
+.ios body[color-theme="dark"] {
+  --fml-background-color: #000000;
+  --fml-background-color-rgb: 0, 0, 0;
+
+  --fml-text-color: #ffffff;
+  --fml-text-color-rgb: 255, 255, 255;
+
+  --fml-color-step-50: #0d0d0d;
+  --fml-color-step-100: #1a1a1a;
+  --fml-color-step-150: #262626;
+  --fml-color-step-200: #333333;
+  --fml-color-step-250: #404040;
+  --fml-color-step-300: #4d4d4d;
+  --fml-color-step-350: #595959;
+  --fml-color-step-400: #666666;
+  --fml-color-step-450: #737373;
+  --fml-color-step-500: #808080;
+  --fml-color-step-550: #8c8c8c;
+  --fml-color-step-600: #999999;
+  --fml-color-step-650: #a6a6a6;
+  --fml-color-step-700: #b3b3b3;
+  --fml-color-step-750: #bfbfbf;
+  --fml-color-step-800: #cccccc;
+  --fml-color-step-850: #d9d9d9;
+  --fml-color-step-900: #e6e6e6;
+  --fml-color-step-950: #f2f2f2;
+
+  --fml-item-background: #000000;
+
+  --fml-card-background: #1c1c1d;
+}
+
+.ios fml-modal {
+  --fml-background-color: var(--fml-color-step-100);
+  --fml-toolbar-background: var(--fml-color-step-150);
+  --fml-toolbar-border-color: var(--fml-color-step-250);
+}
+
+/*
+   * Material Design Dark Theme
+   * -------------------------------------------
+   */
+
+.md body[color-theme="dark"] {
+  --fml-background-color: #121212;
+  --fml-background-color-rgb: 18, 18, 18;
+
+  --fml-text-color: #ffffff;
+  --fml-text-color-rgb: 255, 255, 255;
+
+  --fml-border-color: #222222;
+
+  --fml-color-step-50: #1e1e1e;
+  --fml-color-step-100: #2a2a2a;
+  --fml-color-step-150: #363636;
+  --fml-color-step-200: #414141;
+  --fml-color-step-250: #4d4d4d;
+  --fml-color-step-300: #595959;
+  --fml-color-step-350: #656565;
+  --fml-color-step-400: #717171;
+  --fml-color-step-450: #7d7d7d;
+  --fml-color-step-500: #898989;
+  --fml-color-step-550: #949494;
+  --fml-color-step-600: #a0a0a0;
+  --fml-color-step-650: #acacac;
+  --fml-color-step-700: #b8b8b8;
+  --fml-color-step-750: #c4c4c4;
+  --fml-color-step-800: #d0d0d0;
+  --fml-color-step-850: #dbdbdb;
+  --fml-color-step-900: #e7e7e7;
+  --fml-color-step-950: #f3f3f3;
+
+  --fml-item-background: #1e1e1e;
+
+  --fml-toolbar-background: #1f1f1f;
+
+  --fml-tab-bar-background: #1f1f1f;
+
+  --fml-card-background: #1e1e1e;
+}
+/* } */

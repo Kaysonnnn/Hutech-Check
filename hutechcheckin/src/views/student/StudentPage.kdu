@@ -1,0 +1,235 @@
+<script setup lang="ts">
+import {
+FmlButton,
+  FmlCard,
+  FmlCardContent,
+  FmlCardHeader,
+  FmlCardTitle,
+  FmlCol,
+  FmlGrid,
+  FmlIcon,
+  FmlInput,
+  FmlItem,
+  FmlRow,
+FmlSpinner,
+FmlText,
+} from '@familyjs/kdu';
+import avatar from '@/assets/avatar.svg';
+import { computed, ref, watchEffect } from 'kdu';
+import { useStore } from 'kdux';
+import { Timestamp, doc, getDoc, updateDoc } from '@firebase/firestore';
+import { db } from '@/firebase/config';
+import { saveOutline } from 'famicons/icons';
+import axios from 'axios';
+import { AUTH_API_URL, emailPattern } from '@/const';
+import { showToast } from '@/utils/Toast';
+import { Loader } from '@/components';
+
+const store = useStore();
+
+const studentId = computed(() => store.getters.selectStudentId);
+
+const loading = ref(true);
+const name = ref('');
+const email = ref('');
+const tempEmail = ref('');
+const otp = ref('');
+const verified = ref(false);
+const phone = ref('');
+const studyClass = ref('');
+const isSaving = ref(false);
+
+const getStudentData = async () => {
+  const docRef = doc(db, "students", studentId.value);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    const docData = docSnap.data();
+    name.value = docData.fullName;
+    email.value = docData.email;
+    tempEmail.value = docData.email;
+    phone.value = docData.phone;
+    studyClass.value = docData.studyClass;
+  }
+
+  loading.value = false;
+}
+
+watchEffect(() => {
+  getStudentData();
+});
+
+const sendEmailVerification = async () => {
+  if (emailPattern.test(email.value)) {
+    try {
+      const res = await axios.post(
+        `${AUTH_API_URL}/request-verify-email`,
+        {
+          studentId: studentId.value,
+          email: email.value,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          }
+        }
+      );
+      if (res.status === 200) {
+        showToast("Mã xác minh đã được gửi đến hộp thư email của bạn", "long");
+      }
+    } catch (e: any) {
+      showToast(`${e.response.data.message}`, "long");
+    }
+  } else {
+    showToast("Email không hợp lệ", "long");
+  }
+}
+
+const handleVerifyEmail = async () => {
+  try {
+    const res = await axios.post(
+      `${AUTH_API_URL}/verify-email-otp`,
+      {
+        studentId: studentId.value,
+        email: email.value,
+        otp: otp.value,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        }
+      }
+    );
+    if (res.status === 200) {
+      tempEmail.value = email.value;
+      verified.value = true;
+      showToast("Xác minh email thành công", "long");
+    }
+  } catch (e: any) {
+    showToast(`${e.response.data.message}`, "long");
+  }
+}
+
+const handleSaveChange = async () => {
+  isSaving.value = true;
+
+  await updateDoc(doc(db, "students", studentId.value), {
+    fullName: name.value,
+    email: email.value,
+    phone: phone.value,
+    editedAt: Timestamp.now().toDate(),
+  });
+
+  showToast("Cập nhật thông tin thành công", "long");
+  verified.value = false;
+  isSaving.value = false;
+}
+</script>
+
+<template>
+  <Loader k-if="loading" color="warning" />
+  <fml-card class="container" k-else>
+    <fml-card-header>
+      <fml-card-title>Thông tin sinh viên</fml-card-title>
+    </fml-card-header>
+
+    <fml-card-content>
+      <fml-grid>
+        <fml-row class="fml-align-items-center">
+          <fml-col size="12" size-sm="3">
+            <img :src="avatar" />
+          </fml-col>
+          <fml-col size="12" size-sm="9">
+            <form @submit.prevent="handleSaveChange">
+              <fml-input
+                label="Mã số sinh viên"
+                label-placement="floating"
+                fill="outline"
+                :value="studentId"
+                disabled
+              />
+              <br />
+              <fml-input
+                label="Họ và tên"
+                label-placement="floating"
+                fill="outline"
+                k-model="name"
+              />
+              <br />
+              <fml-input
+                label="Địa chỉ Email"
+                label-placement="floating"
+                fill="outline"
+                k-model="email"
+                :disabled="verified"
+              />
+              <fml-item k-if="email !== '' && email !== tempEmail && !verified">
+                <fml-input
+                  label="Mã xác minh"
+                  label-placement="floating"
+                  type="password"
+                  k-model="otp"
+                  required
+                  style="flex: 1;"
+                />
+                <fml-buttons slot="end">
+                  <fml-button
+                    k-if="otp === ''"
+                    color="primary"
+                    @click="sendEmailVerification"
+                  >
+                    Gửi mã
+                  </fml-button>
+                  <fml-button
+                    k-if="otp !== ''"
+                    color="success"
+                    @click="handleVerifyEmail"
+                  >
+                    Kiểm tra
+                  </fml-button>
+                </fml-buttons>
+              </fml-item>
+              <br />
+              <fml-input
+                label="Số điện thoại"
+                label-placement="floating"
+                fill="outline"
+                k-model="phone"
+              />
+              <br />
+              <fml-input
+                label="Sinh viên lớp"
+                label-placement="floating"
+                fill="outline"
+                :value="studyClass"
+                disabled
+              />
+              <br />
+              <fml-button
+                k-if="!isSaving"
+                expand="block"
+                shape="round"
+                type="submit"
+                :disabled="(email !== '' && email !== tempEmail && !verified)"
+              >
+                <fml-icon slot="start" :icon="saveOutline" />
+                Lưu thay đổi
+              </fml-button>
+              <fml-button k-if="isSaving" expand="block" shape="round" disabled>
+                <fml-spinner />
+              </fml-button>
+            </form>
+          </fml-col>
+        </fml-row>
+      </fml-grid>
+    </fml-card-content>
+  </fml-card>
+</template>
+
+<style scoped>
+img {
+  width: 125px;
+  height: 125px;
+  border-radius: 50%;
+}
+</style>

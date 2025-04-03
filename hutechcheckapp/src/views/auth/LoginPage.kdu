@@ -1,0 +1,119 @@
+<script setup lang="ts">
+import {
+  FmlButton,
+  FmlCard,
+  FmlCardContent,
+  FmlCardHeader,
+  FmlCardTitle,
+  FmlInput,
+  FmlSpinner,
+} from "@familyjs/kdu";
+import { AFFIX_EMAIL, emailPattern } from "@/const";
+import {
+  browserSessionPersistence,
+  setPersistence,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
+import { auth } from "@/firebase/config";
+import { ref } from "kdu";
+import { showToast } from "@/utils/Toast";
+
+const username = ref("");
+const password = ref("");
+const failedLoginAttempt = ref(0);
+const loading = ref(false);
+
+const redirectUser = () => {
+  window.location.replace("/");
+}
+
+const handleSignIn = () => {
+  loading.value = true;
+
+  let email = username.value;
+    if (!emailPattern.test(username.value)) {
+      email += AFFIX_EMAIL;
+    }
+
+    // Đăng nhập tài khoản người dùng với Email và Password vào Firebase Auth
+    setPersistence(auth, browserSessionPersistence).then(() => {
+      signInWithEmailAndPassword(auth, email, password.value)
+        .then((userCredential) => {
+          // const user = userCredential.user;
+          loading.value = false;
+          showToast("Đăng nhập thành công");
+          redirectUser();
+          // console.log(userCredential.user); // TODO: Remove
+        })
+        .catch((error) => {
+          loading.value = false;
+
+          const code = error.code;
+
+          if (code === "auth/user-not-found") {
+            return showToast(`${code}: Tài khoản này không tồn tại!`, "long");
+          } else if (code === "auth/wrong-password") {
+            failedLoginAttempt.value += 1;
+
+            if (failedLoginAttempt.value >= 3) {
+              return showToast(
+                `${code}: Có vẻ như bạn đã quên mật khẩu của mình? Bạn có thể liên hệ Quản trị viên để đặt lại mật khẩu.`,
+                "long"
+              );
+            } else {
+              return showToast(`${code}: Mật khẩu không chính xác!`, "long");
+            }
+          } else if (code === "auth/invalid-credential") {
+            return showToast(
+              `${code}: Thông tin đăng nhập không chính xác!`,
+              "long"
+            );
+          } else if (code === "auth/too-many-requests") {
+            return showToast(
+              `${code}: Quá nhiều yêu cầu đăng nhập! Vui lòng thử lại sau!`,
+              "long"
+            );
+          } else {
+            return showToast(`Mã lỗi: ${code}`, "long");
+          }
+        });
+    });
+}
+</script>
+
+<template>
+  <fml-card>
+    <fml-card-header>
+      <fml-card-title>Đăng nhập</fml-card-title>
+    </fml-card-header>
+
+    <fml-card-content>
+      <form @submit.prevent="handleSignIn">
+        <fml-input
+          label="Tài khoản"
+          label-placement="floating"
+          fill="outline"
+          k-model="username"
+          required
+        />
+        <br />
+        <fml-input
+          label="Mật khẩu"
+          label-placement="floating"
+          fill="outline"
+          type="password"
+          k-model="password"
+          required
+        />
+        <br />
+        <fml-button k-if="!loading" type="submit" shape="round">
+          Đăng nhập
+        </fml-button>
+        <fml-spinner k-if="loading" color="primary" />
+      </form>
+    </fml-card-content>
+  </fml-card>
+</template>
+
+<style scoped>
+</style>

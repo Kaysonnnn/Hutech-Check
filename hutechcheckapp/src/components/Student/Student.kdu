@@ -1,0 +1,51 @@
+<script setup lang="ts">
+import { db } from "@/firebase/config";
+import { FmlIcon, FmlItem, FmlLabel, FmlSpinner } from "@familyjs/kdu";
+import { doc, getDoc } from "@firebase/firestore";
+import { checkmarkDoneCircle } from "famicons/icons";
+import { ref, watchEffect } from "kdu";
+
+const props = defineProps(['studentId']);
+
+let loading = ref(false);
+let name = ref("");
+let code = ref("");
+
+const getData = async () => {
+  const docRef = doc(db, "students", props.studentId);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    const docData = docSnap.data();
+    name.value = docData.fullName;
+    code.value = docData.studentId;
+  }
+  loading.value = false;
+}
+
+watchEffect(() => {
+  loading.value = true;
+  getData();
+})
+</script>
+
+<template>
+  <fml-item k-if="loading">
+    <fml-spinner color="primary" />
+  </fml-item>
+  <fml-item k-else>
+    <fml-icon
+      aria-hidden="true"
+      color="success"
+      :icon="checkmarkDoneCircle"
+      slot="start"
+    />
+    <fml-label>
+      <h4>{{ name }}</h4>
+      <p>{{ code }}</p>
+    </fml-label>
+  </fml-item>
+</template>
+
+<style scoped>
+</style>

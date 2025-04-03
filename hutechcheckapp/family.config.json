@@ -1,0 +1,7 @@
+{
+  "name": "hutechcheckapp",
+  "integrations": {
+    "jigra": {}
+  },
+  "type": "kdu-wite"
+}

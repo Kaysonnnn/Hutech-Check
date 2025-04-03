@@ -1,0 +1,46 @@
+{
+  "name": "hutechcheckin",
+  "description": "A Family project",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "wite",
+    "build": "kdu-tsc && wite build",
+    "preview": "wite preview",
+    "lint": "eslint",
+    "deploy": "fml build --prod && firebase deploy"
+  },
+  "dependencies": {
+    "@familyjs/kdu": "^7.0.1",
+    "@familyjs/kdu-router": "^7.0.1",
+    "@familyjs/pwa-elements": "^3.2.2",
+    "@jigra/app": "5.0.2",
+    "@jigra/core": "5.0.5",
+    "@jigra/dialog": "5.0.2",
+    "@jigra/haptics": "5.0.2",
+    "@jigra/keyboard": "5.0.2",
+    "@jigra/status-bar": "5.0.2",
+    "@jigra/toast": "5.0.2",
+    "axios": "^1.6.8",
+    "dotenv": "^16.4.5",
+    "famicons": "^7.0.1",
+    "firebase": "^10.9.0",
+    "kdu": "^3.2.45",
+    "kdu-router": "^4.1.6",
+    "kdux": "^4.0.0"
+  },
+  "devDependencies": {
+    "@jigra/cli": "5.0.5",
+    "@kdujs/eslint-config-typescript": "^9.1.0",
+    "@witejs/plugin-kdu": "^4.0.0",
+    "@witejs/plugin-legacy": "^3.0.1",
+    "eslint": "^8.35.0",
+    "eslint-plugin-kdu": "^8.0.3",
+    "jsdom": "^21.1.0",
+    "kdu-tsc": "^0.40.21",
+    "typescript": "^4.9.5",
+    "wite": "^4.5.1",
+    "wite-plugin-pwa": "^0.16.7"
+  }
+}

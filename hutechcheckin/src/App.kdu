@@ -1,0 +1,80 @@
+<script setup lang="ts">
+import { FmlApp, FmlRouterOutlet } from '@familyjs/kdu';
+import { Layout, Loader } from './components';
+import { ref, watchEffect } from 'kdu';
+import { useStore } from 'kdux';
+import { getFromLocalStorage, removeFromLocalStorage } from "@/utils/LocalStorage";
+import { showToast } from "@/utils/Toast";
+import axios from "axios";
+import { AUTH_API_URL } from "@/const";
+
+let loading = ref(true);
+
+const setTheme = () => {
+  const theme = getFromLocalStorage("use-theme");
+  if (theme != null) {
+    document.body.setAttribute("color-theme", theme);
+  } else {
+    document.body.setAttribute("color-theme", "light");
+  }
+};
+
+watchEffect(() => {
+  setTheme();
+});
+
+const store = useStore();
+
+const checkIsLoggedIn = async () => {
+  const text = getFromLocalStorage("use-state");
+
+  if (text != null) {
+    try {
+      const res = await axios.get(`${AUTH_API_URL}/`, {
+        headers: {
+          Authorization: `Bearer ${text.accessToken}`,
+        },
+      });
+      if (res.status == 200) {
+        const studentData = res.data;
+        store.dispatch("setActiveStudent", {
+          student: {
+            isLoggedIn: true,
+            studentId: studentData.studentId,
+            fullName: studentData.fullName,
+            email: studentData.email,
+          },
+        });
+      }
+    } catch (e: any) {
+      store.dispatch("removeActiveStudent");
+      showToast(
+        "Phiên đăng nhập hiện tại đã hết hạn. Vui lòng đăng nhập lại.",
+        "long"
+      );
+      removeFromLocalStorage("use-state");
+    } finally {
+      loading.value = false;
+    }
+  } else {
+    loading.value = false;
+  }
+};
+
+watchEffect(() => {
+  loading.value = true;
+  checkIsLoggedIn();
+})
+</script>
+
+<template>
+  <Loader k-if="loading" color="warning" />
+  <fml-app k-if="!loading">
+    <Layout>
+      <fml-router-outlet class="fml-padding" style="overflow-y: auto;" />
+    </Layout>
+  </fml-app>
+</template>
+
+<style scoped>
+</style>
